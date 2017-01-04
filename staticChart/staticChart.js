@@ -1,4 +1,4 @@
-angular.module('servoychartjsStaticChart', ['servoy']).directive('servoychartjsStaticChart', function() {
+angular.module('servoychartjsStaticChart', ['servoy']).directive('servoychartjsStaticChart', function($sabloConstants) {
 		return {
 			restrict: 'E',
 			scope: {
@@ -35,7 +35,10 @@ angular.module('servoychartjsStaticChart', ['servoy']).directive('servoychartjsS
 						}
 						//otherwise use default settings
 						else {
-							var CHART_TYPES = {AREA: 'area', LINE: 'line'};
+							//chart types that require single color otherwise they show gray in designer
+							var CHART_TYPES = { AREA: 'area', LINE: 'line', RADAR: 'radar' };
+							var type = $scope.model.type;
+							var isSingleColor = CHART_TYPES.hasOwnProperty(type.toUpperCase());
 							
 							var data = {
 								labels: $scope.model.xLabels,
@@ -45,16 +48,16 @@ angular.module('servoychartjsStaticChart', ['servoy']).directive('servoychartjsS
 							var options = {
 								responsive: false
 							};
+
 							
 							var dataset = {
 								label: $scope.model.dataLabel,
-								backgroundColor: $scope.model.backgroundColors,
-								borderColor: $scope.model.borderColors,
+								backgroundColor: isSingleColor ? $scope.model.backgroundColors[0] : $scope.model.backgroundColors,
+								borderColor: isSingleColor ? $scope.model.borderColors[0] : $scope.model.borderColors,
 								borderWidth: $scope.model.borderWidth,
 								data: $scope.model.data
 							};
 
-							var type = $scope.model.type;
 							if (type == CHART_TYPES.AREA) {
 								type = CHART_TYPES.LINE;
 								dataset.fill = true;
@@ -86,6 +89,63 @@ angular.module('servoychartjsStaticChart', ['servoy']).directive('servoychartjsS
 						});
 				}
 
+				/**
+				 * Define model change notifiers for design properties so users can see the changes in form designer right away
+				 */
+								Object.defineProperty($scope.model, $sabloConstants.modelChangeNotifier, {
+										configurable: true,
+										value: function(property, value) {
+											switch (property) {
+											case "borderWidth":
+												$scope.myChart.data.datasets[0].borderWidth = value;
+												$scope.myChart.update();
+												break;
+											case "type":
+												$scope.initChart();
+												break;
+											case "dataLabel":
+												$scope.myChart.data.datasets[0].label = value;
+												$scope.myChart.update();
+												break;
+											case "backgroundColors":
+												$scope.myChart.data.datasets[0].backgroundColor = value;
+												$scope.myChart.update();
+												break;
+											case "borderColors":
+												$scope.myChart.data.datasets[0].borderColor = value;
+												$scope.myChart.update();
+												break;
+											default:
+												break;
+											}
+										}
+									});
+				
+								/**
+								 * Destroy model change listeners for designer properties
+								 */
+								var destroyListenerUnreg = $scope.$on("$destroy", function() {
+										destroyListenerUnreg();
+										delete $scope.model[$sabloConstants.modelChangeNotifier];
+									});
+				
+				
+								/**
+								 * Attach the model change Servoy watchers/notifiers for every model variable in the spec that is exposed in designer
+								 */
+								function attachDesignerModelWatchers() {
+									// data can already be here, if so call the modelChange function so
+									// that it is initialized correctly.
+									var modelChangeFunction = $scope.model[$sabloConstants.modelChangeNotifier];
+									for (var key in $scope.model) {
+										modelChangeFunction(key, $scope.model[key]);
+									}
+				
+								}
+				
+								$scope.initChart();
+								attachDesignerModelWatchers();
+
 			},
 			link: function($scope, $element, $attrs) {
 
@@ -112,43 +172,6 @@ angular.module('servoychartjsStaticChart', ['servoy']).directive('servoychartjsS
 						}
 					});
 
-				//watch design properties so users can see the changes in form designer right away
-				if ($scope.svyServoyapi.isInDesigner()) {
-
-					$scope.$watch('model.borderWidth', function(newValue, oldValue) {
-							if (newValue != oldValue) {
-								$scope.myChart.data.datasets[0].borderWidth = newValue;
-								$scope.myChart.update();
-							}
-						});
-
-					$scope.$watch('model.type', function(newValue, oldValue) {
-							if (newValue != oldValue) {
-								$scope.initChart();
-							}
-						});
-
-					$scope.$watch('model.dataLabel', function(newValue, oldValue) {
-							if (newValue != oldValue) {
-								$scope.myChart.data.datasets[0].label = newValue;
-								$scope.myChart.update();
-							}
-						});
-
-					$scope.$watchCollection('model.backgroundColors', function(newValue, oldValue) {
-							if (newValue != oldValue) {
-								$scope.myChart.data.datasets[0].backgroundColor = newValue;
-								$scope.myChart.update();
-							}
-						});
-
-					$scope.$watch('model.borderColors', function(newValue, oldValue) {
-							if (newValue != oldValue) {
-								$scope.myChart.data.datasets[0].borderColor = newValue;
-								$scope.myChart.update();
-							}
-						});
-				}
 			},
 			templateUrl: 'servoychartjs/staticChart/staticChart.html'
 		};
