@@ -28,13 +28,15 @@ angular.module('servoychartjsStaticChart', ['servoy']).directive('servoychartjsS
 							}
 							var x = JSON.parse(str);
 							x.data.datasets[0].data = $scope.model.data;
+							x.data.labels = $scope.model.xLabels;
 
 							drawChart(x.type, x.data, x.options);
 
 						}
 						//otherwise use default settings
 						else {
-													
+							var CHART_TYPES = {AREA: 'area', LINE: 'line'};
+							
 							var data = {
 								labels: $scope.model.xLabels,
 								datasets: []
@@ -53,10 +55,10 @@ angular.module('servoychartjsStaticChart', ['servoy']).directive('servoychartjsS
 							};
 
 							var type = $scope.model.type;
-							if (type == 'area') {
-								type = 'line';
+							if (type == CHART_TYPES.AREA) {
+								type = CHART_TYPES.LINE;
 								dataset.fill = true;
-							} else if (type == 'line') {
+							} else if (type == CHART_TYPES.LINE) {
 								dataset.fill = false;
 							}
 

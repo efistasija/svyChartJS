@@ -14,7 +14,7 @@
 				"scope": "design"
 			},
 
-			"default": "line",
+			"default": "bar",
 			"values": 
 			[
 				{

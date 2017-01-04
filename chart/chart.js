@@ -11,7 +11,7 @@ angular.module('servoychartjsChart', ['servoy']).directive('servoychartjsChart',
 				var tmp;
 				var str;
 				/**
-				 * Initialize the bar chart with default properties. Use to draw the chart on first show of the form
+				 * Initialize the bar chart with default properties or advanced properties if the node object is set.
 				 */
 				$scope.initChart = function() {
 					if ($scope.model.data) {
@@ -33,6 +33,12 @@ angular.module('servoychartjsChart', ['servoy']).directive('servoychartjsChart',
 						}
 						//otherwise use default settings
 						else {
+							//some default values in case the user did not fill in these values
+							var borderWidthDefault = 1;
+							var colorDefault = "rgba(54, 162, 235, 1)";
+							var dataLabelDefault = "My Chart Data";
+							var CHART_TYPES = {AREA: 'area', LINE: 'line'};
+							
 							var data = {
 								labels: $scope.parseData($scope.model.data, 0),
 								datasets: []
@@ -42,19 +48,21 @@ angular.module('servoychartjsChart', ['servoy']).directive('servoychartjsChart',
 								responsive: false
 							};
 
+							
+
 							var dataset = {
-								label: $scope.model.dataLabel,
-								backgroundColor: $scope.model.backgroundColors,
-								borderColor: $scope.model.borderColors,
-								borderWidth: $scope.model.borderWidth,
+								label: $scope.model.dataLabel ? $scope.model.dataLabel : dataLabelDefault,
+								backgroundColor: $scope.model.backgroundColors ? $scope.model.backgroundColors: colorDefault,
+								borderColor: $scope.model.borderColors ? $scope.model.borderColors : colorDefault,
+								borderWidth: $scope.model.borderWidth ? $scope.model.borderWidth : borderWidthDefault,
 								data: $scope.parseData($scope.model.data, 1)
 							};
 
 							var type = $scope.model.type;
-							if (type == 'area') {
-								type = 'line';
+							if (type == CHART_TYPES.AREA) {
+								type = CHART_TYPES.LINE;
 								dataset.fill = true;
-							} else if (type == 'line') {
+							} else if (type == CHART_TYPES.LINE) {
 								dataset.fill = false;
 							}
 
@@ -65,11 +73,11 @@ angular.module('servoychartjsChart', ['servoy']).directive('servoychartjsChart',
 					}
 				}
 				/**
-				 * Parse the dataset into []
+				 * Parse a dataSet column into an array ([]) of values
 				 */
 				$scope.parseData = function(jsDataSet, idx) {
 					var chartData = [];
-					for (var i = 1; i < jsDataSet.length; i++) {
+					for (var i = 0; i < jsDataSet.length; i++) {
 						chartData.push(jsDataSet[i][idx]);
 					}
 					return chartData;
@@ -83,7 +91,8 @@ angular.module('servoychartjsChart', ['servoy']).directive('servoychartjsChart',
 					if ($scope.myChart) {
 						$scope.myChart.destroy();
 					}
-
+					
+					//the top most element is a servoy-generated div. Its first level child is the chart_canvas div
 					var ctx = $element.children(".chart_canvas").children()[0].getContext("2d");
 					$scope.myChart = new Chart(ctx, {
 							type: type,
@@ -111,44 +120,6 @@ angular.module('servoychartjsChart', ['servoy']).directive('servoychartjsChart',
 							$scope.initChart();
 						}
 					});
-
-				//watch design properties so users can see the changes in form designer right away
-				if ($scope.svyServoyapi.isInDesigner()) {
-
-					$scope.$watch('model.borderWidth', function(newValue, oldValue) {
-							if (newValue != oldValue) {
-								$scope.myChart.data.datasets[0].borderWidth = newValue;
-								$scope.myChart.update();
-							}
-						});
-
-					$scope.$watch('model.type', function(newValue, oldValue) {
-							if (newValue != oldValue) {
-								$scope.initChart();
-							}
-						});
-
-					$scope.$watch('model.dataLabel', function(newValue, oldValue) {
-							if (newValue != oldValue) {
-								$scope.myChart.data.datasets[0].label = newValue;
-								$scope.myChart.update();
-							}
-						});
-
-					$scope.$watchCollection('model.backgroundColors', function(newValue, oldValue) {
-							if (newValue != oldValue) {
-								$scope.myChart.data.datasets[0].backgroundColor = newValue;
-								$scope.myChart.update();
-							}
-						});
-
-					$scope.$watch('model.borderColors', function(newValue, oldValue) {
-							if (newValue != oldValue) {
-								$scope.myChart.data.datasets[0].borderColor = newValue;
-								$scope.myChart.update();
-							}
-						});
-				}
 			},
 			templateUrl: 'servoychartjs/chart/chart.html'
 		};
