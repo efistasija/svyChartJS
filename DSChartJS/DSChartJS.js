@@ -28,6 +28,8 @@ angular.module('servoychartjsDSChartJS', ['servoy']).directive('servoychartjsDSC
 							var x = JSON.parse(str);
 							x.data.labels = $scope.parseData($scope.model.data, 0);
 							x.data.datasets[0].data = $scope.parseData($scope.model.data, 1);
+							x.options.onClick = handleClick;
+							x.options.responsive = false;
 
 							drawChart(x.type, x.data, x.options);
 
@@ -38,22 +40,21 @@ angular.module('servoychartjsDSChartJS', ['servoy']).directive('servoychartjsDSC
 							var borderWidthDefault = 1;
 							var colorDefault = "rgba(54, 162, 235, 1)";
 							var dataLabelDefault = "My Chart Data";
-							var CHART_TYPES = {AREA: 'area', LINE: 'line'};
-							
+							var CHART_TYPES = { AREA: 'area', LINE: 'line' };
+
 							var data = {
 								labels: $scope.parseData($scope.model.data, 0),
 								datasets: []
 							};
 
 							var options = {
-								responsive: false
+								responsive: false,
+								onClick: handleClick
 							};
-
-							
 
 							var dataset = {
 								label: $scope.model.dataLabel ? $scope.model.dataLabel : dataLabelDefault,
-								backgroundColor: $scope.model.backgroundColors ? $scope.model.backgroundColors: colorDefault,
+								backgroundColor: $scope.model.backgroundColors ? $scope.model.backgroundColors : colorDefault,
 								borderColor: $scope.model.borderColors ? $scope.model.borderColors : colorDefault,
 								borderWidth: $scope.model.borderWidth ? $scope.model.borderWidth : borderWidthDefault,
 								data: $scope.parseData($scope.model.data, 1)
@@ -92,7 +93,7 @@ angular.module('servoychartjsDSChartJS', ['servoy']).directive('servoychartjsDSC
 					if ($scope.myChart) {
 						$scope.myChart.destroy();
 					}
-					
+
 					//the top most element is a servoy-generated div. Its first level child is the chart_canvas div
 					var ctx = $element.children(".chart_canvas").children()[0].getContext("2d");
 					$scope.myChart = new Chart(ctx, {
@@ -100,6 +101,15 @@ angular.module('servoychartjsDSChartJS', ['servoy']).directive('servoychartjsDSC
 							data: data,
 							options: options
 						});
+				}
+
+				/**On chart click function*/
+				function handleClick(e) {
+					var activePoints = $scope.myChart.getElementsAtEvent(e);
+					var firstPoint = activePoints[0];
+					var label = $scope.myChart.data.labels[firstPoint._index];
+					var value = $scope.myChart.data.datasets[firstPoint._datasetIndex].data[firstPoint._index];
+					if ($scope.handlers.onClick) $scope.handlers.onClick(firstPoint._index, label, value);
 				}
 
 			},

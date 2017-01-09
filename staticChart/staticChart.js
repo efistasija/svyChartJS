@@ -29,6 +29,8 @@ angular.module('servoychartjsStaticChart', ['servoy']).directive('servoychartjsS
 							var x = JSON.parse(str);
 							x.data.datasets[0].data = $scope.model.data;
 							x.data.labels = $scope.model.xLabels;
+							x.options.onClick = handleClick;
+							x.options.responsive = false;
 
 							drawChart(x.type, x.data, x.options);
 
@@ -39,17 +41,17 @@ angular.module('servoychartjsStaticChart', ['servoy']).directive('servoychartjsS
 							var CHART_TYPES = { AREA: 'area', LINE: 'line', RADAR: 'radar' };
 							var type = $scope.model.type;
 							var isSingleColor = CHART_TYPES.hasOwnProperty(type.toUpperCase());
-							
+
 							var data = {
 								labels: $scope.model.xLabels,
 								datasets: []
 							};
 
 							var options = {
-								responsive: false
+								responsive: false,
+								onClick: handleClick
 							};
 
-							
 							var dataset = {
 								label: $scope.model.dataLabel,
 								backgroundColor: isSingleColor ? $scope.model.backgroundColors[0] : $scope.model.backgroundColors,
@@ -89,62 +91,70 @@ angular.module('servoychartjsStaticChart', ['servoy']).directive('servoychartjsS
 						});
 				}
 
+				/**On chart click function*/
+				function handleClick(e) {
+					var activePoints = $scope.myChart.getElementsAtEvent(e);
+					var firstPoint = activePoints[0];
+					var label = $scope.myChart.data.labels[firstPoint._index];
+					var value = $scope.myChart.data.datasets[firstPoint._datasetIndex].data[firstPoint._index];
+					if ($scope.handlers.onClick) $scope.handlers.onClick(firstPoint._index, label, value);
+				}
+
 				/**
 				 * Define model change notifiers for design properties so users can see the changes in form designer right away
 				 */
-								Object.defineProperty($scope.model, $sabloConstants.modelChangeNotifier, {
-										configurable: true,
-										value: function(property, value) {
-											switch (property) {
-											case "borderWidth":
-												$scope.myChart.data.datasets[0].borderWidth = value;
-												$scope.myChart.update();
-												break;
-											case "type":
-												$scope.initChart();
-												break;
-											case "dataLabel":
-												$scope.myChart.data.datasets[0].label = value;
-												$scope.myChart.update();
-												break;
-											case "backgroundColors":
-												$scope.myChart.data.datasets[0].backgroundColor = value;
-												$scope.myChart.update();
-												break;
-											case "borderColors":
-												$scope.myChart.data.datasets[0].borderColor = value;
-												$scope.myChart.update();
-												break;
-											default:
-												break;
-											}
-										}
-									});
-				
-								/**
-								 * Destroy model change listeners for designer properties
-								 */
-								var destroyListenerUnreg = $scope.$on("$destroy", function() {
-										destroyListenerUnreg();
-										delete $scope.model[$sabloConstants.modelChangeNotifier];
-									});
-				
-				
-								/**
-								 * Attach the model change Servoy watchers/notifiers for every model variable in the spec that is exposed in designer
-								 */
-								function attachDesignerModelWatchers() {
-									// data can already be here, if so call the modelChange function so
-									// that it is initialized correctly.
-									var modelChangeFunction = $scope.model[$sabloConstants.modelChangeNotifier];
-									for (var key in $scope.model) {
-										modelChangeFunction(key, $scope.model[key]);
-									}
-				
-								}
-				
+				Object.defineProperty($scope.model, $sabloConstants.modelChangeNotifier, {
+						configurable: true,
+						value: function(property, value) {
+							switch (property) {
+							case "borderWidth":
+								$scope.myChart.data.datasets[0].borderWidth = value;
+								$scope.myChart.update();
+								break;
+							case "type":
 								$scope.initChart();
-								attachDesignerModelWatchers();
+								break;
+							case "dataLabel":
+								$scope.myChart.data.datasets[0].label = value;
+								$scope.myChart.update();
+								break;
+							case "backgroundColors":
+								$scope.myChart.data.datasets[0].backgroundColor = value;
+								$scope.myChart.update();
+								break;
+							case "borderColors":
+								$scope.myChart.data.datasets[0].borderColor = value;
+								$scope.myChart.update();
+								break;
+							default:
+								break;
+							}
+						}
+					});
+
+				/**
+				 * Destroy model change listeners for designer properties
+				 */
+				var destroyListenerUnreg = $scope.$on("$destroy", function() {
+						destroyListenerUnreg();
+						delete $scope.model[$sabloConstants.modelChangeNotifier];
+					});
+
+				/**
+				 * Attach the model change Servoy watchers/notifiers for every model variable in the spec that is exposed in designer
+				 */
+				function attachDesignerModelWatchers() {
+					// data can already be here, if so call the modelChange function so
+					// that it is initialized correctly.
+					var modelChangeFunction = $scope.model[$sabloConstants.modelChangeNotifier];
+					for (var key in $scope.model) {
+						modelChangeFunction(key, $scope.model[key]);
+					}
+
+				}
+
+				$scope.initChart();
+				attachDesignerModelWatchers();
 
 			},
 			link: function($scope, $element, $attrs) {

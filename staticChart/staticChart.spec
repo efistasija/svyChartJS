@@ -3,7 +3,7 @@
 	"displayName": "staticChart",
 	"version": 1,
 	"definition": "servoychartjs/staticChart/staticChart.js",
-	"serverscript":"servoychartjs/staticChart/staticChart_server.js",
+	"serverscript": "servoychartjs/staticChart/staticChart_server.js",
 	"model": 
 	{
 		"type": 
@@ -65,10 +65,20 @@
 				40
 			]
 		},
-		
-		"xLabels":{
-				"type":"string[]",
-				"default":["January", "February", "March", "April", "May", "June", "July"]
+
+		"xLabels": 
+		{
+			"type": "string[]",
+			"default": 
+			[
+				"January",
+				"February",
+				"March",
+				"April",
+				"May",
+				"June",
+				"July"
+			]
 		},
 
 		"dataLabel": 
@@ -138,6 +148,30 @@
 			{
 				"scope": "private"
 			}
+		}
+	},
+
+	"handlers": 
+	{
+		"onClick": 
+		{
+			"parameters": 
+			[
+				{
+					"name": "index",
+					"type": "int"
+				},
+
+				{
+					"name": "label",
+					"type": "string"
+				},
+
+				{
+					"name": "value",
+					"type": "int"
+				}
+			]
 		}
 	},
 
