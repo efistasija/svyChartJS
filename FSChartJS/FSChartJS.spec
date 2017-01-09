@@ -105,7 +105,6 @@
 		"maxLoadedRecords": 
 		{
 			"type": "int",
-			"default": 20,
 			"tags": 
 			{
 				"scope": "design"
