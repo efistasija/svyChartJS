@@ -1,4 +1,4 @@
-angular.module('servoychartjsChart', ['servoy']).directive('servoychartjsChart', function() {
+angular.module('servoychartjsDSChartJS', ['servoy']).directive('servoychartjsDSChartJS', function() {
 		return {
 			restrict: 'E',
 			scope: {
@@ -26,7 +26,8 @@ angular.module('servoychartjsChart', ['servoy']).directive('servoychartjsChart',
 								str = JSON.stringify($scope.model.node);
 							}
 							var x = JSON.parse(str);
-							x.data.datasets[0].data = $scope.parseData($scope.model.data);
+							x.data.labels = $scope.parseData($scope.model.data, 0);
+							x.data.datasets[0].data = $scope.parseData($scope.model.data, 1);
 
 							drawChart(x.type, x.data, x.options);
 
@@ -121,6 +122,6 @@ angular.module('servoychartjsChart', ['servoy']).directive('servoychartjsChart',
 						}
 					});
 			},
-			templateUrl: 'servoychartjs/chart/chart.html'
+			templateUrl: 'servoychartjs/DSChartJS/DSChartJS.html'
 		};
 	})

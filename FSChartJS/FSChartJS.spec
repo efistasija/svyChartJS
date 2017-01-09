@@ -1,12 +1,26 @@
 {
-	"name": "servoychartjs-chart",
-	"displayName": "chart",
+	"name": "servoychartjs-F-S-Chart-J-S",
+	"displayName": "FSChartJS",
 	"version": 1,
-	"definition": "servoychartjs/chart/chart.js",
-	"serverscript": "servoychartjs/chart/chart_server.js",
-	"libraries": [],
+	"definition": "servoychartjs/FSChartJS/FSChartJS.js",
+	"serverscript": "servoychartjs/FSChartJS/FSChartJS_server.js",
+	"libraries": 
+	[
+		
+	],
+
 	"model": 
 	{
+		"foundset": 
+		{
+			"type": "foundset",
+			"dataproviders": 
+			[
+				"value",
+				"label"
+			]
+		},
+
 		"type": 
 		{
 			"type": "string",
@@ -14,6 +28,7 @@
 			{
 				"scope": "design"
 			},
+
 			"default": "bar",
 			"values": 
 			[
@@ -49,16 +64,6 @@
 					"DOUGHNUT": "doughnut"
 				}
 			]
-		},
-
-		"data": 
-		{
-			"type": "dataset",
-			"includeColumnNames": false,
-			"tags": 
-			{
-				"scope": "private"
-			}
 		},
 
 		"dataLabel": 
@@ -97,6 +102,38 @@
 			}
 		},
 
+		"maxLoadedRecords": 
+		{
+			"type": "int",
+			"default": 20,
+			"tags": 
+			{
+				"scope": "design"
+			}
+		},
+
+		"pageSize": 
+		{
+			"type": "int",
+			"default": 20,
+			"tags": 
+			{
+				"scope": "design"
+			}
+		},
+
+		"currentPage": 
+		{
+			"type": "int",
+			"default": 1,
+			"tags": 
+			{
+				"scope": "runtime"
+			},
+
+			"pushToServer": "shallow"
+		},
+
 		"node": 
 		{
 			"type": "object",
@@ -104,6 +141,30 @@
 			{
 				"scope": "private"
 			}
+		}
+	},
+
+	"handlers": 
+	{
+		"onClick": 
+		{
+			"parameters": 
+			[
+				{
+					"name": "index",
+					"type": "int"
+				},
+
+				{
+					"name": "label",
+					"type": "string"
+				},
+
+				{
+					"name": "value",
+					"type": "int"
+				}
+			]
 		}
 	},
 
@@ -116,21 +177,6 @@
 				{
 					"name": "node",
 					"type": "object"
-				}
-			]
-		},
-
-		"setDataSet": 
-		{
-			"parameters": 
-			[
-				{
-					"name": "jsDataSet",
-					"type": 
-					{
-						"type": "dataset",
-						"includeColumnNames": true
-					}
 				}
 			]
 		}

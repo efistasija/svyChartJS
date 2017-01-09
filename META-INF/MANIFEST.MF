@@ -9,7 +9,10 @@ JS-ClientLibs: servoychartjs/lib/js/chartjs/Chart.bundle.min.js;name=C
  hart.bundle.min.js;version=2.4.0, servoychartjs/lib/js/patternomaly/p
  atternomaly.js;name=patternomaly.js;version=1.2.2
 
-Name: chart/chart.spec
+Name: DSChartJS/DSChartJS.spec
+Web-Component: True
+
+Name: FSChartJS/FSChartJS.spec
 Web-Component: True
 
 Name: staticChart/staticChart.spec
