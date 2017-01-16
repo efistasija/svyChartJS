@@ -1,6 +1,4 @@
 Manifest-Version: 1.0
-CSS-ClientLibs: servoychartjs/lib/css/svy-chartjs.css;name=svy-chartjs
- .css;version=1.0.0
 Bundle-SymbolicName: servoychartjs
 Bundle-Name: servoy-chartjs
 Bundle-Version: 1.0.0
@@ -8,7 +6,9 @@ Package-Type: Web-Component
 JS-ClientLibs: servoychartjs/lib/js/chartjs/Chart.bundle.min.js;name=C
  hart.bundle.min.js;version=2.4.0, servoychartjs/lib/js/patternomaly/p
  atternomaly.js;name=patternomaly.js;version=1.2.2
-
+CSS-ClientLibs: servoychartjs/lib/css/svy-chartjs.css;name=svy-chartjs
+ .css;version=1.0.0
+ 
 Name: DSChartJS/DSChartJS.spec
 Web-Component: True
 

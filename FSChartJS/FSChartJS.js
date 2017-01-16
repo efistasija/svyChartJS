@@ -15,6 +15,7 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 				 */
 				$scope.initChart = function() {
 					var drawSize = calculateDrawSize();
+					var chartValues = $scope.parseData($scope.model.foundset.viewPort.rows, drawSize);
 					//if the user wants an advanced chart, he needs to pass a node object that defines all properties
 					if ($scope.model.node) {
 						//we need to pass a fresh node object to the chart each time we paint it as the library Chart.js
@@ -25,8 +26,8 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 							str = JSON.stringify($scope.model.node);
 						}
 						var x = JSON.parse(str);
-						x.data.labels = $scope.parseData($scope.model.foundset.viewPort.rows, $scope.model.foundset.viewPort.startIndex, drawSize, 'label');
-						x.data.datasets[0].data = $scope.parseData($scope.model.foundset.viewPort.rows, $scope.model.foundset.viewPort.startIndex, drawSize, 'value');
+						x.data.labels = chartValues.labels;
+						x.data.datasets[0].data = chartValues.data;
 						x.options.onClick = handleClick;
 						x.options.responsive = false;
 
@@ -42,7 +43,8 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 						var CHART_TYPES = { AREA: 'area', LINE: 'line' };
 
 						var data = {
-							labels: $scope.parseData($scope.model.foundset.viewPort.rows, $scope.model.foundset.viewPort.startIndex, drawSize, 'label'),
+							labels: chartValues.labels,
+							//labels: $scope.parseData($scope.model.foundset.viewPort.rows, $scope.model.foundset.viewPort.startIndex, drawSize, 'label'),
 							datasets: []
 						};
 
@@ -56,7 +58,9 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 							backgroundColor: $scope.model.backgroundColors ? $scope.model.backgroundColors : colorDefault,
 							borderColor: $scope.model.borderColors ? $scope.model.borderColors : colorDefault,
 							borderWidth: $scope.model.borderWidth ? $scope.model.borderWidth : borderWidthDefault,
-							data: $scope.parseData($scope.model.foundset.viewPort.rows, $scope.model.foundset.viewPort.startIndex, drawSize, 'value')
+							data: chartValues.data
+
+							//data: $scope.parseData($scope.model.foundset.viewPort.rows, $scope.model.foundset.viewPort.startIndex, drawSize, 'value')
 						};
 
 						var type = $scope.model.type;
@@ -78,8 +82,8 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 				 * Ex: pageSize is 5 records, viewPort size is 16. The last page will have size of 1.
 				 * */
 				function calculateDrawSize() {
-					if ($scope.model.foundset.viewPort.startIndex + $scope.model.pageSize > $scope.model.foundset.viewPort.size) {
-						return $scope.model.foundset.viewPort.size - $scope.model.foundset.viewPort.startIndex;
+					if ($scope.model.pageSize > $scope.model.foundset.viewPort.size) {
+						return $scope.model.foundset.viewPort.size;
 					} else {
 						return $scope.model.pageSize;
 					}
@@ -87,18 +91,22 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 				/**
 				 * Parse a dataSet column into an array ([]) of values
 				 */
-				$scope.parseData = function(fsRows, startIndex, size, colName) {
+				$scope.parseData = function(fsRows, size) {
+
 					var chartData = [];
-					for (var i = startIndex; i < (startIndex + size); i++) {
-						if (colName == 'label') {
-							chartData.push(fsRows[i]['label'] ? fsRows[i]['label'] : fsRows[i]['value']);
-						} else {
-							chartData.push(fsRows[i]['value']);
-						}
+					var chartLabels = [];
+					for (var i = 0; i < size; i++) {
+						chartLabels.push(fsRows[i]['label'] ? fsRows[i]['label'] : fsRows[i]['value']);
+						chartData.push(fsRows[i]['value']);
 					}
-					return chartData;
+
+					var chartObj = { labels: chartLabels, data: chartData };
+					return chartObj;
 				}
 
+				var ctxOrigHeight = 0;
+				var ctxOrigWidth = 0;
+				var flag = true;
 				/**
 				 * Draws the chart, takes care or redraws if needed
 				 * */
@@ -108,14 +116,26 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 						$scope.myChart.destroy();
 					}
 
-					//the top most element is a servoy-generated div. Its first level child is the chart_canvas div
 					var ctx = $element.children(".chart_canvas").children()[0].getContext("2d");
+					if (!flag) {
+						ctx.canvas.width = ctxOrigWidth;
+						ctx.canvas.height = ctxOrigHeight;
+					}
+					//the top most element is a servoy-generated div. Its first level child is the chart_canvas div
 					$scope.myChart = new Chart(ctx, {
 							type: type,
 							data: data,
 							options: options
 						});
+
+					if (flag) {
+						ctxOrigWidth = $scope.myChart.chart.width;
+						ctxOrigHeight = $scope.myChart.chart.height;
+						flag = false;
+					}
+
 				}
+
 				/**On chart click function*/
 				function handleClick(e) {
 					var activePoints = $scope.myChart.getElementsAtEvent(e);
@@ -132,30 +152,20 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 				 * Wait till the foundset is available on client side
 				 * */
 				$scope.$watch('model.foundset', function() {
-						if ($scope.model.maxLoadedRecords) {
-							$scope.model.foundset.setPreferredViewportSize($scope.model.maxLoadedRecords);
-							$scope.model.foundset.loadRecordsAsync(0, $scope.model.maxLoadedRecords);
-						}
-						$scope.initChart();
+						$scope.model.foundset.setPreferredViewportSize($scope.model.pageSize);
 					});
 
 				/** Redraw the chart when the size of the foundset changes */
 				$scope.$watch('model.foundset.viewPort.size', function(newValue, oldValue) {
-						if ($scope.model.source == 'foundset') {
-							if (newValue > oldValue) {
-								if ( ($scope.model.maxLoadedRecords && $scope.model.foundset.viewPort.size < $scope.model.maxLoadedRecords) || ($scope.model.foundset.viewPort.size < $scope.model.foundset.serverSize)) {
-									$scope.model.foundset.loadExtraRecordsAsync(200);
-								}
-							}
+						if ( (newValue > oldValue) && ($scope.model.foundset.viewPort.size < $scope.model.foundset.serverSize)) {
+							$scope.model.foundset.loadExtraRecordsAsync(200);
 							$scope.initChart();
 						}
 					});
 
-				/* draw the chart when the value in foundset changes */
+				/* draw the chart when the values in the foundset rows changes */
 				$scope.$watchCollection('model.foundset.viewPort.rows', function(newValue, oldValue) {
-						if (newValue != oldValue) {
-							$scope.initChart();
-						}
+						$scope.initChart();
 					});
 
 				/**
@@ -163,10 +173,11 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 				 * @param {Number} count The number of pages to increase/decrease. It is either 1 for next page or -1 for previous page
 				 * */
 				$scope.modifyPage = function(count) {
-					var pages = Math.ceil($scope.model.foundset.viewPort.size / $scope.model.pageSize)
-					var newPage = $scope.model.currentPage + count;
-					if (newPage >= 1 && newPage <= pages) {
-						setCurrentPage(newPage);
+					if (count < 0 || $scope.hasNext()) {
+						if ( ($scope.model.currentPage + count) > 0) {
+							var newPage = $scope.model.currentPage + count;
+							setCurrentPage(newPage);
+						}
 					}
 				}
 
@@ -174,7 +185,7 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 				 * Check if there are more pages to show/hide next/previous page navigation
 				 * */
 				$scope.hasNext = function() {
-					return $scope.model.foundset && $scope.model.currentPage < Math.ceil($scope.model.foundset.viewPort.size / $scope.model.pageSize);
+					return $scope.model.foundset.hasMoreRows || ($scope.model.foundset && $scope.model.currentPage < Math.ceil($scope.model.foundset.serverSize / $scope.model.pageSize) && $scope.model.currentPage > 0);
 				}
 
 				/**
@@ -192,8 +203,8 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 					var loadNext;
 					if ($scope.model.currentPage != newCurrentPage) {
 						loadNext = $scope.model.currentPage < newCurrentPage;
-						$scope.model.currentPage = newCurrentPage;
 						loadCurrentPageRecords(loadNext);
+						$scope.model.currentPage = newCurrentPage;
 					}
 				}
 
@@ -202,12 +213,9 @@ angular.module('servoychartjsFSChartJS', ['servoy']).directive('servoychartjsFSC
 				 * @param {Boolean} loadNext true is we go to the next page, false if we go to the previous page
 				 * */
 				function loadCurrentPageRecords(loadNext) {
-					if (loadNext == true) {
-						$scope.model.foundset.viewPort.startIndex += $scope.model.pageSize;
-					} else {
-						$scope.model.foundset.viewPort.startIndex -= $scope.model.pageSize;
-					}
-					$scope.initChart();
+					var startIndex = ($scope.model.currentPage - 1) * $scope.model.pageSize;// currentPage -1 because page count starts from 1 and viewPort indexes from 0
+					startIndex = (loadNext == true) ? startIndex + $scope.model.pageSize : startIndex - $scope.model.pageSize;
+					$scope.model.foundset.loadRecordsAsync(startIndex, $scope.model.pageSize).then(function() { });
 				}
 			},
 			templateUrl: 'servoychartjs/FSChartJS/FSChartJS.html'

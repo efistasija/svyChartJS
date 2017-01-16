@@ -18,7 +18,10 @@
 			[
 				"value",
 				"label"
-			]
+			],
+
+			"initialPreferredViewPortSize": 20,
+			"sendSelectionViewportInitially": true
 		},
 
 		"type": 
@@ -68,7 +71,7 @@
 
 		"dataLabel": 
 		{
-			"type": "string",
+			"type": "tagstring",
 			"tags": 
 			{
 				"scope": "design"
@@ -94,15 +97,6 @@
 		},
 
 		"borderWidth": 
-		{
-			"type": "int",
-			"tags": 
-			{
-				"scope": "design"
-			}
-		},
-
-		"maxLoadedRecords": 
 		{
 			"type": "int",
 			"tags": 
